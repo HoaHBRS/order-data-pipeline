@@ -66,3 +66,7 @@ invalid windows, rollback, safe reruns, and transient-error retry.
 ## Requirements
 
 Python 3 with SQLite support. No third-party packages are required.
+
+## Project Status
+
+Completed and verified with eight automated tests.
