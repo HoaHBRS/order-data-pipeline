@@ -31,6 +31,14 @@ order_pipeline_project/
 The SQLite database is generated at `data/order_pipeline.db` when the pipeline
 runs. Database files are intentionally excluded from Git.
 
+## Quick Start
+
+```bash
+git clone https://github.com/HoaHBRS/order-data-pipeline.git
+cd order-data-pipeline
+python3 test_pipeline.py
+```
+
 ## Run the Incremental Pipeline
 
 ```bash
