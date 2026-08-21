@@ -1,7 +1,7 @@
 # Contributing
 
 1. Start from an up-to-date `main` branch.
-2. Create a separate branch for one focused change.
+2. Create a dedicated branch for each focused change.
 3. Run the automated tests before committing:
 
 ```bash
