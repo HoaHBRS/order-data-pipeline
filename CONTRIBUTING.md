@@ -10,3 +10,5 @@ python3 test_pipeline.py
 
 4. Commit with a clear message.
 5. Push the branch and open a pull request.
+6. Keep each pull request focused and easy to review.
+7. Address review comments before merging.
