@@ -1,0 +1,5 @@
+status,status_label
+PAID,Paid
+SHIPPED,Shipped
+CANCELLED,Cancelled
+PENDING,Pending
