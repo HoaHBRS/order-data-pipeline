@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: order_pipeline
+    schema: main
+    tables:
+      - name: orders
+      - name: pipeline_runs
+      - name: pipeline_state
+      - name: rejected_orders
