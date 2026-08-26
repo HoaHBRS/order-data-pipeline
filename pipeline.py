@@ -6,6 +6,11 @@ import logging
 from pathlib import Path
 import sqlite3
 import time
+from io import StringIO
+from blob_storage import (
+    read_blob_text,
+    upload_rows_as_csv,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +30,8 @@ EXPECTED_COLUMNS = (
     "amount_cents",
     "updated_at",
 )
+
+REJECTED_COLUMNS = EXPECTED_COLUMNS + ("error_message",)
 
 ALLOWED_STATUSES = frozenset(
     {
@@ -64,9 +71,15 @@ def parse_arguments(arguments=None):
         required=True,
     )
 
-    subparsers.add_parser(
+    incremental_parser = subparsers.add_parser(
         "incremental",
         help="Run incremental pipeline",
+    )
+
+    incremental_parser.add_argument(
+        "--source",
+        default=str(CSV_PATH),
+        help="Local CSV path or Blob Storage URL",
     )
 
     replay_parser = subparsers.add_parser(
@@ -82,6 +95,11 @@ def parse_arguments(arguments=None):
         "--end-at",
         required=True,
         help="Exclusive replay end time",
+    )
+    replay_parser.add_argument(
+        "--source",
+        default=str(CSV_PATH),
+        help="Local CSV path or Blob Storage URL",
     )
 
     return parser.parse_args(arguments)
@@ -363,10 +381,20 @@ def fail_interrupted_runs(connection):
 
 
 # Extraction and validation
-
-
 def extract_orders(csv_path):
-    with open(csv_path, "r", encoding="utf-8", newline="") as csv_file:
+    source = str(csv_path)
+
+    if source.startswith("blob://"):
+        container_name, blob_name = source[7:].split("/", 1)
+        csv_file = StringIO(
+            read_blob_text(container_name, blob_name)
+        )
+    else:
+        csv_file = open(
+            csv_path, "r", encoding="utf-8", newline=""
+        )
+
+    with csv_file:
         reader = csv.DictReader(csv_file)
         actual_columns = tuple(reader.fieldnames or ())
 
@@ -609,6 +637,33 @@ def run_order_pipeline(
             if before_commit_hook is not None:
                 before_commit_hook()
 
+        source = str(csv_path)
+
+        if source.startswith("blob://"):
+            source_blob_name = source[7:].split("/", 1)[1]
+
+            upload_rows_as_csv(
+                container_name="processed",
+                blob_name=source_blob_name,
+                rows=valid_rows,
+                fieldnames=EXPECTED_COLUMNS,
+            )
+
+            rejected_output_rows = [
+                {
+                    **row["raw_row"],
+                    "error_message": row["error_message"],
+                }
+                for row in rejected_rows
+            ]
+
+            upload_rows_as_csv(
+                container_name="rejected",
+                blob_name=source_blob_name,
+                rows=rejected_output_rows,
+                fieldnames=REJECTED_COLUMNS,
+            )
+
         summary["changed_count"] = changed_count
         summary["quarantined_count"] = quarantined_count
         finish_successful_run(connection, run_id, summary)
@@ -795,11 +850,11 @@ def execute_command(connection, args):
     if args.command == "incremental":
         return run_order_pipeline_with_retry(
             connection,
-            CSV_PATH,
+            args.source,
         )
 
     if args.command == "replay":
-        rows = extract_orders(CSV_PATH)
+        rows = extract_orders(args.source)
         return run_order_replay(
             connection,
             rows,
