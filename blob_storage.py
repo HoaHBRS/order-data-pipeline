@@ -2,14 +2,32 @@ import os
 import csv
 from io import StringIO
 from azure.storage.blob import BlobServiceClient
+from azure.identity import DefaultAzureCredential
+
+
+def create_blob_service_client():
+    connection_string = os.getenv(
+        "AZURE_STORAGE_CONNECTION_STRING"
+    )
+
+    if connection_string:
+        return BlobServiceClient.from_connection_string(
+            connection_string
+        )
+
+    account_url = os.environ[
+        "AZURE_STORAGE_ACCOUNT_URL"
+    ]
+
+    return BlobServiceClient(
+        account_url=account_url,
+        credential=DefaultAzureCredential(),
+    )
 
 
 def read_blob_text(container_name, blob_name):
-    connection_string = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
 
-    blob_service_client = BlobServiceClient.from_connection_string(
-        connection_string
-    )
+    blob_service_client = create_blob_service_client()
 
     blob_client = blob_service_client.get_blob_client(
         container=container_name,
@@ -33,12 +51,7 @@ def upload_rows_as_csv(
     writer.writeheader()
     writer.writerows(rows)
 
-    connection_string = os.environ[
-        "AZURE_STORAGE_CONNECTION_STRING"
-    ]
-    blob_service_client = BlobServiceClient.from_connection_string(
-        connection_string
-    )
+    blob_service_client = create_blob_service_client()
     blob_client = blob_service_client.get_blob_client(
         container=container_name,
         blob=blob_name,
