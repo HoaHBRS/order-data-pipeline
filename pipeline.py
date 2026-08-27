@@ -61,6 +61,7 @@ def configure_logging():
         format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    logging.getLogger("azure").setLevel(logging.WARNING)
 
 
 def parse_arguments(arguments=None):
