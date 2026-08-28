@@ -6,3 +6,10 @@ __MACOSX/
 venv/
 *.log
 data/*.db
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+crash.log
