@@ -7,4 +7,12 @@ terraform {
       version = "~> 4.0"
     }
   }
+
+  backend "azurerm" {
+    use_cli              = true
+    use_azuread_auth     = true
+    storage_account_name = "storderpipelinedev270826"
+    container_name       = "tfstate"
+    key                  = "order-data-pipeline-dev.tfstate"
+  }
 }
