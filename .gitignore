@@ -13,3 +13,4 @@ data/*.db
 *.tfvars
 *.tfplan
 crash.log
+.github/dbt-ci/.user.yml
