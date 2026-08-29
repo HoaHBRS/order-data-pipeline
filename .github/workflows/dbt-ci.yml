@@ -1,0 +1,43 @@
+name: dbt CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  dbt:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: order_analytics
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r ../requirements.txt
+
+      - name: Load CI seed data
+        run: dbt seed --full-refresh --profiles-dir ../.github/dbt-ci
+
+      - name: Build and test
+        run: dbt build --exclude resource_type:seed --profiles-dir ../.github/dbt-ci

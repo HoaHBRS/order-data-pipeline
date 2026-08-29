@@ -33,3 +33,8 @@ models:
   order_analytics:
     # Config indicated by + and applies to all files under models/example/
     +materialized: view
+
+seeds:
+  order_analytics:
+    ci:
+      +enabled: "{{ target.name == 'ci' }}"

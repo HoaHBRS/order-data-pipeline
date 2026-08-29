@@ -1,0 +1,11 @@
+order_analytics:
+  target: ci
+  outputs:
+    ci:
+      type: sqlite
+      threads: 1
+      database: database
+      schema: main
+      schemas_and_paths:
+        main: /tmp/order_analytics_ci.db
+      schema_directory: /tmp
