@@ -57,3 +57,28 @@ jobs:
           path: infra/terraform/tfplan
           retention-days: 1
           if-no-files-found: error
+
+  apply:
+    name: Terraform Apply Gate
+    needs: plan
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download Terraform plan
+        uses: actions/download-artifact@v8
+        with:
+          name: terraform-plan
+          path: infra/terraform
+
+      - name: Verify downloaded plan
+        working-directory: infra/terraform
+        run: test -f tfplan
