@@ -48,4 +48,12 @@ jobs:
         run: terraform validate -no-color
 
       - name: Plan Terraform changes
-        run: terraform plan -input=false -no-color -lock-timeout=60s
+        run: terraform plan -input=false -no-color -lock-timeout=60s -out=tfplan
+
+      - name: Upload Terraform plan
+        uses: actions/upload-artifact@v7
+        with:
+          name: terraform-plan
+          path: infra/terraform/tfplan
+          retention-days: 1
+          if-no-files-found: error
