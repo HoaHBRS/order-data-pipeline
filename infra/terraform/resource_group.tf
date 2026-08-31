@@ -5,5 +5,6 @@ resource "azurerm_resource_group" "pipeline" {
   tags = {
     environment = "dev"
     project     = "order-data-pipeline"
+    managed_by  = "terraform"
   }
 }
