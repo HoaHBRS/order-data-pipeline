@@ -3,12 +3,17 @@ name: Terraform CD
 on:
   workflow_dispatch:
 
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: false
+
 permissions:
   contents: read
   id-token: write
 
 jobs:
   plan:
+    if: github.ref == 'refs/heads/main'
     name: Plan dev infrastructure
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -62,6 +67,7 @@ jobs:
     name: Terraform Apply Gate
     needs: plan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: dev
 
@@ -101,4 +107,4 @@ jobs:
 
       - name: Apply saved Terraform plan
         working-directory: infra/terraform
-        run: terraform apply -input=false -no-color tfplan
+        run: terraform apply -input=false -no-color -lock-timeout=60s tfplan
