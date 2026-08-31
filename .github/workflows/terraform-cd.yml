@@ -73,6 +73,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Log in to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Download Terraform plan
         uses: actions/download-artifact@v8
         with:
@@ -82,3 +92,11 @@ jobs:
       - name: Verify downloaded plan
         working-directory: infra/terraform
         run: test -f tfplan
+
+      - name: Initialize Terraform
+        working-directory: infra/terraform
+        run: terraform init -input=false -no-color -lock-timeout=60s
+
+      - name: Apply saved Terraform plan
+        working-directory: infra/terraform
+        run: terraform apply -input=false -no-color tfplan
