@@ -32,8 +32,8 @@ class KafkaProducerTests(unittest.TestCase):
         order = {
             "order_id": "ORD-TEST-1",
             "customer_id": "C-TEST",
-            "amount": "49.90",
-            "status": "created",
+            "amount_cents": "4990",
+            "status": "PENDING",
             "updated_at": "2026-08-01T10:00:00",
         }
         mock_extract_orders.return_value = [order]

@@ -37,3 +37,6 @@ jobs:
 
       - name: Run Kafka producer tests
         run: python test_kafka_producer.py
+
+      - name: Run Kafka consumer tests
+        run: python test_kafka_consumer.py

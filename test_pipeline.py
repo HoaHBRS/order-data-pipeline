@@ -10,6 +10,7 @@ from pipeline import (
     run_order_pipeline_with_retry,
     run_order_replay,
     validate_replay_window,
+    validate_orders,
 )
 
 
@@ -354,7 +355,41 @@ def test_retry_after_transient_failure():
     print("test_retry_after_transient_failure: PASSED")
 
 
+def test_validate_orders_routes_valid_and_invalid_rows():
+    valid_order = {
+        "order_id": "ORD-VALID-1",
+        "customer_id": "C-TEST",
+        "status": "PENDING",
+        "amount_cents": "4990",
+        "updated_at": "2026-08-01T10:00:00",
+    }
+
+    invalid_order = valid_order.copy()
+    invalid_order["order_id"] = "ORD-INVALID-1"
+    invalid_order["status"] = "created"
+
+    valid_rows, rejected_rows = validate_orders(
+        [valid_order, invalid_order]
+    )
+
+    assert len(valid_rows) == 1
+    assert valid_rows[0]["order_id"] == "ORD-VALID-1"
+    assert valid_rows[0]["amount_cents"] == 4990
+    assert (
+        valid_rows[0]["updated_at"].isoformat()
+        == "2026-08-01T10:00:00"
+    )
+
+    assert len(rejected_rows) == 1
+    assert rejected_rows[0]["order_id"] == "ORD-INVALID-1"
+    assert "invalid status" in rejected_rows[0]["error_message"]
+
+    print(
+        "test_validate_orders_routes_valid_and_invalid_rows: PASSED"
+    )
+
 def run_all_tests():
+    test_validate_orders_routes_valid_and_invalid_rows()
     test_incremental_idempotency()
     test_successful_replay()
     test_replay_window_boundaries()
