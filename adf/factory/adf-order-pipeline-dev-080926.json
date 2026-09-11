@@ -1,0 +1,15 @@
+{
+	"name": "adf-order-pipeline-dev-080926",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "germanywestcentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "a02cc100-a371-413b-b326-3dc066d7fdd4",
+		"tenantId": "1c70e3c7-2361-4d11-8540-76e6855cfad3"
+	}
+}

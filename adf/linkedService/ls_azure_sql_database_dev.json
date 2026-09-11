@@ -1,0 +1,15 @@
+{
+	"name": "ls_azure_sql_database_dev",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "sql-order-pipeline-dev-070926.database.windows.net",
+			"database": "sqldb-order-pipeline-dev",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SystemAssignedManagedIdentity"
+		}
+	}
+}

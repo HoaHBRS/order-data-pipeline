@@ -1,0 +1,47 @@
+{
+	"name": "ds_sql_staging_orders",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_azure_sql_database_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "order_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "customer_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "amount_cents",
+				"type": "nvarchar"
+			},
+			{
+				"name": "updated_at",
+				"type": "nvarchar"
+			},
+			{
+				"name": "source_file",
+				"type": "nvarchar"
+			},
+			{
+				"name": "loaded_at",
+				"type": "datetime2",
+				"scale": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "staging_orders"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
