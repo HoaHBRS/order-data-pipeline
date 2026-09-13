@@ -1,0 +1,70 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory-Name",
+			"defaultValue": "adf-order-pipeline-dev-080926"
+		},
+		"ls_azure_sql_database_dev_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sql-order-pipeline-dev-070926.database.windows.net"
+		},
+		"ls_azure_sql_database_dev_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sqldb-order-pipeline-dev"
+		},
+		"ls_blob_storage_dev_properties_typeProperties_serviceEndpoint": {
+			"type": "string",
+			"defaultValue": "https://storderpipelinedev270826.blob.core.windows.net/"
+		},
+		"ls_key_vault_dev_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://kv-order-dev-080926.vault.azure.net/"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI für Speicherkonto mit verknüpften ARM-Vorlagen"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "SAS-Token für Speicherkonto mit verknüpften ARM-Vorlagen"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "adf-order-pipeline-dev-080926_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"ls_azure_sql_database_dev_properties_typeProperties_server": {
+						"value": "[parameters('ls_azure_sql_database_dev_properties_typeProperties_server')]"
+					},
+					"ls_azure_sql_database_dev_properties_typeProperties_database": {
+						"value": "[parameters('ls_azure_sql_database_dev_properties_typeProperties_database')]"
+					},
+					"ls_blob_storage_dev_properties_typeProperties_serviceEndpoint": {
+						"value": "[parameters('ls_blob_storage_dev_properties_typeProperties_serviceEndpoint')]"
+					},
+					"ls_key_vault_dev_properties_typeProperties_baseUrl": {
+						"value": "[parameters('ls_key_vault_dev_properties_typeProperties_baseUrl')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

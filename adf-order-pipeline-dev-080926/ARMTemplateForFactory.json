@@ -1,0 +1,562 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory-Name",
+			"defaultValue": "adf-order-pipeline-dev-080926"
+		},
+		"ls_azure_sql_database_dev_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sql-order-pipeline-dev-070926.database.windows.net"
+		},
+		"ls_azure_sql_database_dev_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sqldb-order-pipeline-dev"
+		},
+		"ls_blob_storage_dev_properties_typeProperties_serviceEndpoint": {
+			"type": "string",
+			"defaultValue": "https://storderpipelinedev270826.blob.core.windows.net/"
+		},
+		"ls_key_vault_dev_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://kv-order-dev-080926.vault.azure.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_ingest_orders_raw_to_staging')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copy_raw_orders_to_staging",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"additionalColumns": [
+									{
+										"name": "source_file",
+										"value": "$$FILEPATH"
+									}
+								],
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": false,
+									"wildcardFileName": {
+										"value": "@pipeline().parameters.source_file_pattern",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"preCopyScript": "DELETE FROM dbo.staging_orders;",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "order_id",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "order_id"
+										}
+									},
+									{
+										"source": {
+											"name": "customer_id",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "customer_id"
+										}
+									},
+									{
+										"source": {
+											"name": "status",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "status"
+										}
+									},
+									{
+										"source": {
+											"name": "amount_cents",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "amount_cents"
+										}
+									},
+									{
+										"source": {
+											"name": "updated_at",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "updated_at"
+										}
+									},
+									{
+										"source": {
+											"name": "source_file",
+											"type": "String"
+										},
+										"sink": {
+											"name": "source_file"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_blob_raw_orders_csv",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_sql_staging_orders",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "upsert_valid_orders",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "copy_raw_orders_to_staging",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_upsert_valid_orders]"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_database_dev",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "insert_rejected_orders",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "upsert_valid_orders",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_insert_rejected_orders]"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_database_dev",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "log_pipeline_success",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "log_data_quality",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_log_pipeline_run]",
+							"storedProcedureParameters": {
+								"error_message": {
+									"value": null,
+									"type": "String"
+								},
+								"pipeline_name": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"pipeline_run_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"rows_copied": {
+									"value": {
+										"value": "@activity('copy_raw_orders_to_staging').output.rowsCopied",
+										"type": "Expression"
+									},
+									"type": "Int64"
+								},
+								"rows_read": {
+									"value": {
+										"value": "@activity('copy_raw_orders_to_staging').output.rowsRead",
+										"type": "Expression"
+									},
+									"type": "Int64"
+								},
+								"run_status": {
+									"value": "SUCCEEDED",
+									"type": "String"
+								},
+								"source_file_pattern": {
+									"value": {
+										"value": "@pipeline().parameters.source_file_pattern",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_database_dev",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "log_pipeline_failure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "log_data_quality",
+								"dependencyConditions": [
+									"Failed",
+									"Skipped"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_log_pipeline_run]",
+							"storedProcedureParameters": {
+								"error_message": {
+									"value": {
+										"value": "@if(\n    equals(activity('copy_raw_orders_to_staging').Status, 'Failed'),\n    activity('copy_raw_orders_to_staging').error.message,\n    if(\n        equals(activity('upsert_valid_orders').Status, 'Failed'),\n        activity('upsert_valid_orders').error.message,\n        if(\n            equals(activity('insert_rejected_orders').Status, 'Failed'),\n            activity('insert_rejected_orders').error.message,\n            activity('log_data_quality').error.message\n        )\n    )\n)",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"pipeline_name": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"pipeline_run_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"rows_copied": {
+									"value": null,
+									"type": "Int64"
+								},
+								"rows_read": {
+									"value": null,
+									"type": "Int64"
+								},
+								"run_status": {
+									"value": "FAILED",
+									"type": "String"
+								},
+								"source_file_pattern": {
+									"value": {
+										"value": "@pipeline().parameters.source_file_pattern",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_database_dev",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "raise_pipeline_failure",
+						"type": "Fail",
+						"dependsOn": [
+							{
+								"activity": "log_pipeline_failure",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"message": "Pipeline failed. See dbo.pipeline_runs for the original error.",
+							"errorCode": "PIPELINE_FAILED"
+						}
+					},
+					{
+						"name": "log_data_quality",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "insert_rejected_orders",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[dbo].[usp_log_data_quality_run]",
+							"storedProcedureParameters": {
+								"pipeline_run_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"source_file_pattern": {
+									"value": {
+										"value": "@pipeline().parameters.source_file_pattern",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql_database_dev",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_file_pattern": {
+						"type": "string",
+						"defaultValue": "orders_*.csv"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-09-11T05:47:03Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_blob_raw_orders_csv')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sql_staging_orders')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_database_dev')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_blob_raw_orders_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_storage_dev",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_storage_dev')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_sql_staging_orders')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_azure_sql_database_dev",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "order_id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "customer_id",
+						"type": "nvarchar"
+					},
+					{
+						"name": "status",
+						"type": "nvarchar"
+					},
+					{
+						"name": "amount_cents",
+						"type": "nvarchar"
+					},
+					{
+						"name": "updated_at",
+						"type": "nvarchar"
+					},
+					{
+						"name": "source_file",
+						"type": "nvarchar"
+					},
+					{
+						"name": "loaded_at",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "staging_orders"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_database_dev')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_azure_sql_database_dev')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('ls_azure_sql_database_dev_properties_typeProperties_server')]",
+					"database": "[parameters('ls_azure_sql_database_dev_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SystemAssignedManagedIdentity"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_blob_storage_dev')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"serviceEndpoint": "[parameters('ls_blob_storage_dev_properties_typeProperties_serviceEndpoint')]",
+					"accountKind": "StorageV2"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_key_vault_dev')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('ls_key_vault_dev_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
