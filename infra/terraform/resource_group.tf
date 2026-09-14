@@ -1,9 +1,9 @@
 resource "azurerm_resource_group" "pipeline" {
-  name     = "rg-order-data-pipeline-dev"
-  location = "Germany West Central"
+  name     = var.resource_group_name
+  location = var.location
 
   tags = {
-    environment = "dev"
+    environment = var.environment
     project     = "order-data-pipeline"
     managed_by  = "terraform"
   }

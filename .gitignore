@@ -11,6 +11,8 @@ data/*.db
 *.tfstate
 *.tfstate.*
 *.tfvars
+!infra/terraform/dev.tfvars
+!infra/terraform/test.tfvars
 *.tfplan
 crash.log
 .github/dbt-ci/.user.yml

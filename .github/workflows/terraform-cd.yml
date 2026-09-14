@@ -2,9 +2,18 @@ name: Terraform CD
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: test
+        type: choice
+        options:
+          - test
+          - dev
 
 concurrency:
-  group: terraform-dev
+  group: terraform-${{ inputs.environment }}
   cancel-in-progress: false
 
 permissions:
@@ -14,7 +23,7 @@ permissions:
 jobs:
   plan:
     if: github.ref == 'refs/heads/main'
-    name: Plan dev infrastructure
+    name: Plan ${{ inputs.environment }} infrastructure
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -47,29 +56,29 @@ jobs:
             --output table
 
       - name: Initialize Terraform
-        run: terraform init -input=false
+        run: terraform init -input=false -no-color -reconfigure -backend-config=backend-${{ inputs.environment }}.hcl
 
       - name: Validate Terraform
         run: terraform validate -no-color
 
       - name: Plan Terraform changes
-        run: terraform plan -input=false -no-color -lock-timeout=60s -out=tfplan
+        run: terraform plan -input=false -no-color -lock-timeout=60s -var-file=${{ inputs.environment }}.tfvars -out=tfplan
 
       - name: Upload Terraform plan
         uses: actions/upload-artifact@v7
         with:
-          name: terraform-plan
+          name: terraform-plan-${{ inputs.environment }}
           path: infra/terraform/tfplan
           retention-days: 1
           if-no-files-found: error
 
   apply:
-    name: Terraform Apply Gate
+    name: Apply ${{ inputs.environment }} infrastructure
     needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
-      name: dev
+      name: ${{ inputs.environment }}
 
     permissions:
       contents: read
@@ -94,7 +103,7 @@ jobs:
       - name: Download Terraform plan
         uses: actions/download-artifact@v8
         with:
-          name: terraform-plan
+          name: terraform-plan-${{ inputs.environment }}
           path: infra/terraform
 
       - name: Verify downloaded plan
@@ -103,7 +112,7 @@ jobs:
 
       - name: Initialize Terraform
         working-directory: infra/terraform
-        run: terraform init -input=false -no-color -lock-timeout=60s
+        run: terraform init -input=false -no-color -reconfigure -backend-config=backend-${{ inputs.environment }}.hcl
 
       - name: Apply saved Terraform plan
         working-directory: infra/terraform

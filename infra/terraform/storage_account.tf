@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "pipeline" {
-  name                     = "storderpipelinedev270826"
+  name                     = var.storage_account_name
   resource_group_name      = azurerm_resource_group.pipeline.name
   location                 = azurerm_resource_group.pipeline.location
   account_kind             = "StorageV2"
@@ -32,7 +32,7 @@ resource "azurerm_storage_account" "pipeline" {
   }
 
   tags = {
-    environment = "dev"
+    environment = var.environment
     project     = "order-data-pipeline"
   }
 }
