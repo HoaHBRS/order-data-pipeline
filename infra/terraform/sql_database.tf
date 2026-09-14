@@ -31,7 +31,6 @@ resource "azurerm_mssql_database" "pipeline" {
   min_capacity                = 0.5
   auto_pause_delay_in_minutes = 60
   max_size_gb                 = 32
-  license_type                = "LicenseIncluded"
   storage_account_type        = "Local"
   zone_redundant              = false
 
