@@ -17,3 +17,5 @@ data/*.db
 crash.log
 .github/dbt-ci/.user.yml
 /sql/
+# Terraform saved plan files
+**/tfplan*

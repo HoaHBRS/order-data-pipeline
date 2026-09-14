@@ -29,3 +29,34 @@ variable "enable_github_configuration" {
   type        = bool
   default     = false
 }
+
+variable "key_vault_name" {
+  description = "Azure Key Vault name"
+  type        = string
+}
+
+variable "sql_server_name" {
+  description = "Azure SQL logical server name"
+  type        = string
+}
+
+variable "sql_database_name" {
+  description = "Azure SQL database name"
+  type        = string
+}
+
+variable "sql_entra_admin_login" {
+  description = "Microsoft Entra administrator login"
+  type        = string
+}
+
+variable "sql_entra_admin_object_id" {
+  description = "Microsoft Entra administrator object ID"
+  type        = string
+}
+
+variable "manage_runtime_resources" {
+  description = "Whether Terraform creates Key Vault and SQL resources"
+  type        = bool
+  default     = false
+}
