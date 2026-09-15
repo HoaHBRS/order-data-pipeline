@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "factoryName": {
+      "value": "adf-order-pipeline-test-140926"
+    },
+    "ls_azure_sql_database_dev_properties_typeProperties_server": {
+      "value": "sql-order-pipeline-test-140926.database.windows.net"
+    },
+    "ls_azure_sql_database_dev_properties_typeProperties_database": {
+      "value": "sqldb-order-pipeline-test"
+    },
+    "ls_blob_storage_dev_properties_typeProperties_serviceEndpoint": {
+      "value": "https://storderpipelinetst140926.blob.core.windows.net/"
+    },
+    "ls_key_vault_dev_properties_typeProperties_baseUrl": {
+      "value": "https://kv-order-test-140926.vault.azure.net/"
+    }
+  }
+}
