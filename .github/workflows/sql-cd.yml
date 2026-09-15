@@ -52,14 +52,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy schema scripts
+      - name: Deploy database objects
         uses: azure/sql-action@v2.3
         with:
           connection-string: 'Server=tcp:sql-order-pipeline-test-140926.database.windows.net,1433;Initial Catalog=sqldb-order-pipeline-test;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
-          path: './database/schema/*.sql'
-
-      - name: Deploy stored procedures
-        uses: azure/sql-action@v2.3
-        with:
-          connection-string: 'Server=tcp:sql-order-pipeline-test-140926.database.windows.net,1433;Initial Catalog=sqldb-order-pipeline-test;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
-          path: './database/procedures/*.sql'
+          path: './database/deploy.sql'
