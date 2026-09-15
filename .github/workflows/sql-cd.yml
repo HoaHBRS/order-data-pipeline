@@ -1,0 +1,65 @@
+name: SQL CD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: sql-cd-test
+  cancel-in-progress: false
+
+jobs:
+  check-files:
+    name: Check SQL deployment files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check SQL script counts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          schema_count="$(find database/schema -maxdepth 1 -type f -name '*.sql' | wc -l)"
+          procedure_count="$(find database/procedures -maxdepth 1 -type f -name '*.sql' | wc -l)"
+
+          test "$schema_count" -eq 5
+          test "$procedure_count" -eq 4
+
+          echo "Found $schema_count schema scripts"
+          echo "Found $procedure_count procedure scripts"
+
+  deploy-test:
+    name: Deploy SQL to TEST
+    needs: check-files
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log in to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy schema scripts
+        uses: azure/sql-action@v2.3
+        with:
+          connection-string: 'Server=tcp:sql-order-pipeline-test-140926.database.windows.net,1433;Initial Catalog=sqldb-order-pipeline-test;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+          path: './database/schema/*.sql'
+
+      - name: Deploy stored procedures
+        uses: azure/sql-action@v2.3
+        with:
+          connection-string: 'Server=tcp:sql-order-pipeline-test-140926.database.windows.net,1433;Initial Catalog=sqldb-order-pipeline-test;Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+          path: './database/procedures/*.sql'
