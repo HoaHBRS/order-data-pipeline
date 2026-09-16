@@ -1,0 +1,99 @@
+name: ADF Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_file_pattern:
+        description: CSV file pattern in the raw container
+        required: true
+        default: "orders_*.csv"
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: adf-smoke-test
+  cancel-in-progress: false
+
+jobs:
+  smoke-test:
+    name: Run ADF pipeline in TEST
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: test
+
+    env:
+      ADF_RESOURCE_GROUP: rg-order-data-pipeline-test
+      ADF_FACTORY_NAME: adf-order-pipeline-test-140926
+      ADF_PIPELINE_NAME: pl_ingest_orders_raw_to_staging
+
+    steps:
+      - name: Log in to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Azure Data Factory CLI extension
+        run: az extension add --name datafactory --upgrade --only-show-errors
+
+      - name: Trigger ADF pipeline
+        id: trigger
+        shell: bash
+        env:
+          SOURCE_FILE_PATTERN: ${{ inputs.source_file_pattern }}
+        run: |
+          set -euo pipefail
+
+          parameters_json="$(jq -nc \
+            --arg pattern "$SOURCE_FILE_PATTERN" \
+            '{source_file_pattern: $pattern}')"
+
+          run_id="$(az datafactory pipeline create-run \
+            --resource-group "$ADF_RESOURCE_GROUP" \
+            --factory-name "$ADF_FACTORY_NAME" \
+            --name "$ADF_PIPELINE_NAME" \
+            --parameters "$parameters_json" \
+            --query runId \
+            --output tsv)"
+
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Triggered ADF run: $run_id"
+
+      - name: Wait for pipeline result
+        shell: bash
+        env:
+          ADF_RUN_ID: ${{ steps.trigger.outputs.run_id }}
+        run: |
+          set -euo pipefail
+
+          for attempt in {1..60}; do
+            status="$(az datafactory pipeline-run show \
+              --resource-group "$ADF_RESOURCE_GROUP" \
+              --factory-name "$ADF_FACTORY_NAME" \
+              --run-id "$ADF_RUN_ID" \
+              --query status \
+              --output tsv)"
+
+            echo "Attempt $attempt/60: $status"
+
+            case "$status" in
+              Succeeded)
+                echo "ADF pipeline succeeded."
+                exit 0
+                ;;
+              Failed|Cancelled|Canceled)
+                echo "ADF pipeline ended with status: $status" >&2
+                exit 1
+                ;;
+            esac
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for ADF pipeline." >&2
+          exit 1
