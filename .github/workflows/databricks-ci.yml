@@ -1,0 +1,47 @@
+name: Databricks Bundle CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "databricks/order_lakehouse/**"
+      - ".github/workflows/databricks-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: databricks-bundle-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABRICKS_HOST: https://adb-7405615488742735.15.azuredatabricks.net
+      DATABRICKS_AUTH_TYPE: azure-cli
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_PLAN_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_PLAN_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_PLAN_SUBSCRIPTION_ID }}
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Verify Databricks authentication
+        run: databricks current-user me
+
+      - name: Validate Databricks bundle
+        working-directory: databricks/order_lakehouse
+        run: databricks bundle validate -t prod
