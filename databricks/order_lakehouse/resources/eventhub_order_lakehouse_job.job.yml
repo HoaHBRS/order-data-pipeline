@@ -1,0 +1,58 @@
+resources:
+  jobs:
+    eventhub_order_lakehouse_job:
+      name: eventhub_order_lakehouse_job
+      tasks:
+        - task_key: bronze_ingest
+          disabled: false
+          email_notifications: {}
+          notebook_task:
+            notebook_path: ../src/12_eventhub_bronze_available_now.ipynb
+            source: WORKSPACE
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+          webhook_notifications: {}
+        - task_key: silver_transform
+          depends_on:
+            - task_key: bronze_ingest
+          disabled: false
+          email_notifications: {}
+          notebook_task:
+            notebook_path: ../src/10_eventhub_silver_orders.ipynb
+            source: WORKSPACE
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+          webhook_notifications: {}
+        - task_key: gold_metrics
+          depends_on:
+            - task_key: silver_transform
+          disabled: false
+          email_notifications: {}
+          notebook_task:
+            notebook_path: ../src/11_eventhub_gold_metrics.ipynb
+            source: WORKSPACE
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+          webhook_notifications: {}
+        - task_key: quality_check
+          depends_on:
+            - task_key: gold_metrics
+          disable_auto_optimization: true
+          disabled: false
+          email_notifications: {}
+          max_retries: 0
+          min_retry_interval_millis: 900000
+          notebook_task:
+            notebook_path: ../src/13_eventhub_quality_check.ipynb
+            source: WORKSPACE
+          retry_on_timeout: false
+          run_if: ALL_SUCCESS
+          timeout_seconds: 0
+      email_notifications:
+        no_alert_for_skipped_runs: false
+      max_concurrent_runs: 1
+      performance_target: PERFORMANCE_OPTIMIZED
+      queue:
+        enabled: true
+      timeout_seconds: 0
+      webhook_notifications: {}

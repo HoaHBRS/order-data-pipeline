@@ -1,0 +1,41 @@
+# This is a Declarative Automation Bundle definition for order_lakehouse.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: order_lakehouse
+  uuid: 96d0af90-4bad-4788-b58e-d3ceea8c8c6e
+
+include:
+  - resources/*.yml
+
+# Variable declarations. These variables are assigned in the dev/prod targets below.
+variables:
+  catalog:
+    description: The catalog to use
+  schema:
+    description: The schema to use
+
+targets:
+  dev:
+    # The default target uses 'mode: development' to create a development copy.
+    # - Deployed resources get prefixed with '[dev my_user_name]'
+    # - Any job schedules and triggers are paused by default.
+    # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405615488742735.15.azuredatabricks.net
+    variables:
+      catalog: dbw_order_lakehouse_lab
+      schema: order_analytics
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405615488742735.15.azuredatabricks.net
+      # We explicitly deploy to /Workspace/Users/hoa.vn@icloud.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/hoa.vn@icloud.com/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: dbw_order_lakehouse_lab
+      schema: order_analytics
+    permissions:
+      - user_name: hoa.vn@icloud.com
+        level: CAN_MANAGE
