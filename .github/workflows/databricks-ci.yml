@@ -32,7 +32,7 @@ jobs:
       - name: Log in to Azure with OIDC
         uses: azure/login@v3
         with:
-          client-id: ${{ secrets.AZURE_PLAN_CLIENT_ID }}
+          client-id: 7c117674-d285-4251-b658-f149cdd37013
           tenant-id: ${{ secrets.AZURE_PLAN_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_PLAN_SUBSCRIPTION_ID }}
 
