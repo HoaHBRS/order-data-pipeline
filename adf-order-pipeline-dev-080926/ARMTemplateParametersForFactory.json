@@ -16,6 +16,12 @@
 		},
 		"ls_key_vault_dev_properties_typeProperties_baseUrl": {
 			"value": "https://kv-order-dev-080926.vault.azure.net/"
+		},
+		"trg_orders_blob_created_properties_pl_ingest_orders_raw_to_staging_parameters_source_file_pattern": {
+			"value": "@triggerBody().fileName"
+		},
+		"trg_orders_blob_created_properties_typeProperties_scope": {
+			"value": "/subscriptions/fad3dbef-58c2-4da8-9795-69fd176a0fb3/resourceGroups/rg-order-data-pipeline-dev/providers/Microsoft.Storage/storageAccounts/storderpipelinedev270826"
 		}
 	}
 }

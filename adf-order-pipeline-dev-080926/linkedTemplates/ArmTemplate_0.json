@@ -4,7 +4,7 @@
 	"parameters": {
 		"factoryName": {
 			"type": "string",
-			"metadata": "Data Factory-Name",
+			"metadata": "Name der Data Factory",
 			"defaultValue": "adf-order-pipeline-dev-080926"
 		},
 		"ls_azure_sql_database_dev_properties_typeProperties_server": {
@@ -22,6 +22,14 @@
 		"ls_key_vault_dev_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://kv-order-dev-080926.vault.azure.net/"
+		},
+		"trg_orders_blob_created_properties_pl_ingest_orders_raw_to_staging_parameters_source_file_pattern": {
+			"type": "string",
+			"defaultValue": "@triggerBody().fileName"
+		},
+		"trg_orders_blob_created_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/fad3dbef-58c2-4da8-9795-69fd176a0fb3/resourceGroups/rg-order-data-pipeline-dev/providers/Microsoft.Storage/storageAccounts/storderpipelinedev270826"
 		}
 	},
 	"variables": {
@@ -556,6 +564,39 @@
 				"[concat(variables('factoryId'), '/datasets/ds_blob_raw_orders_csv')]",
 				"[concat(variables('factoryId'), '/datasets/ds_sql_staging_orders')]",
 				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_database_dev')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trg_orders_blob_created')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_ingest_orders_raw_to_staging",
+							"type": "PipelineReference"
+						},
+						"parameters": {
+							"source_file_pattern": "[parameters('trg_orders_blob_created_properties_pl_ingest_orders_raw_to_staging_parameters_source_file_pattern')]"
+						}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/raw/blobs/orders_",
+					"blobPathEndsWith": ".csv",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('trg_orders_blob_created_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_orders_raw_to_staging')]"
 			]
 		}
 	]

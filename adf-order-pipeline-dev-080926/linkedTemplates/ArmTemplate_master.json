@@ -4,7 +4,7 @@
 	"parameters": {
 		"factoryName": {
 			"type": "string",
-			"metadata": "Data Factory-Name",
+			"metadata": "Name der Data Factory",
 			"defaultValue": "adf-order-pipeline-dev-080926"
 		},
 		"ls_azure_sql_database_dev_properties_typeProperties_server": {
@@ -22,6 +22,14 @@
 		"ls_key_vault_dev_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://kv-order-dev-080926.vault.azure.net/"
+		},
+		"trg_orders_blob_created_properties_pl_ingest_orders_raw_to_staging_parameters_source_file_pattern": {
+			"type": "string",
+			"defaultValue": "@triggerBody().fileName"
+		},
+		"trg_orders_blob_created_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/fad3dbef-58c2-4da8-9795-69fd176a0fb3/resourceGroups/rg-order-data-pipeline-dev/providers/Microsoft.Storage/storageAccounts/storderpipelinedev270826"
 		},
 		"containerUri": {
 			"type": "string",
@@ -61,6 +69,12 @@
 					},
 					"ls_key_vault_dev_properties_typeProperties_baseUrl": {
 						"value": "[parameters('ls_key_vault_dev_properties_typeProperties_baseUrl')]"
+					},
+					"trg_orders_blob_created_properties_pl_ingest_orders_raw_to_staging_parameters_source_file_pattern": {
+						"value": "[parameters('trg_orders_blob_created_properties_pl_ingest_orders_raw_to_staging_parameters_source_file_pattern')]"
+					},
+					"trg_orders_blob_created_properties_typeProperties_scope": {
+						"value": "[parameters('trg_orders_blob_created_properties_typeProperties_scope')]"
 					}
 				}
 			},
