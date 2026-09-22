@@ -1,0 +1,28 @@
+{
+	"name": "trg_orders_blob_created",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_ingest_orders_raw_to_staging",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"source_file_pattern": "@triggerBody().fileName"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/raw/blobs/orders_",
+			"blobPathEndsWith": ".csv",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/fad3dbef-58c2-4da8-9795-69fd176a0fb3/resourceGroups/rg-order-data-pipeline-dev/providers/Microsoft.Storage/storageAccounts/storderpipelinedev270826",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
