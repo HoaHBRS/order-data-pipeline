@@ -1,0 +1,12 @@
+{
+	"name": "ls_databricks_job_dev",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-7405615488742735.15.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/fad3dbef-58c2-4da8-9795-69fd176a0fb3/resourceGroups/rg-order-lakehouse-lab/providers/Microsoft.Databricks/workspaces/dbw-order-lakehouse-lab"
+		}
+	}
+}
