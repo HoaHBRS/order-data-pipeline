@@ -424,6 +424,33 @@
 							"referenceName": "ls_azure_sql_database_dev",
 							"type": "LinkedServiceReference"
 						}
+					},
+					{
+						"name": "run_databricks_lakehouse_job",
+						"type": "DatabricksJob",
+						"dependsOn": [
+							{
+								"activity": "log_pipeline_success",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"jobId": "929068172734771"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks_job_dev",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -441,7 +468,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_blob_raw_orders_csv')]",
 				"[concat(variables('factoryId'), '/datasets/ds_sql_staging_orders')]",
-				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_database_dev')]"
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql_database_dev')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_databricks_job_dev')]"
 			]
 		},
 		{
@@ -549,6 +577,21 @@
 				"typeProperties": {
 					"serviceEndpoint": "[parameters('ls_blob_storage_dev_properties_typeProperties_serviceEndpoint')]",
 					"accountKind": "StorageV2"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_databricks_job_dev')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405615488742735.15.azuredatabricks.net",
+					"authentication": "MSI",
+					"workspaceResourceId": "/subscriptions/fad3dbef-58c2-4da8-9795-69fd176a0fb3/resourceGroups/rg-order-lakehouse-lab/providers/Microsoft.Databricks/workspaces/dbw-order-lakehouse-lab"
 				}
 			},
 			"dependsOn": []
