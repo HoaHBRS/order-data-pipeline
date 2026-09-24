@@ -411,6 +411,12 @@
 				}
 			}
 		],
+		"parameters": {
+			"source_file_pattern": {
+				"type": "string",
+				"defaultValue": "orders_*.csv"
+			}
+		},
 		"annotations": [],
 		"lastPublishTime": "2026-09-11T05:47:03Z"
 	},
