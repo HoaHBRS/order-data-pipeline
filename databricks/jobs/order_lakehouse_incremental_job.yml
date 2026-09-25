@@ -1,0 +1,27 @@
+resources:
+  jobs:
+    order_lakehouse_incremental_job:
+      name: order_lakehouse_incremental_job
+      tasks:
+        - task_key: bronze_incremental
+          notebook_task:
+            notebook_path: /Workspace/Users/hoa.vn@icloud.com/06_job_bronze_incremental
+            source: WORKSPACE
+        - task_key: silver_incremental
+          depends_on:
+            - task_key: bronze_incremental
+          notebook_task:
+            notebook_path: /Workspace/Users/hoa.vn@icloud.com/07_job_silver_incremental
+            source: WORKSPACE
+        - task_key: gold_refresh
+          depends_on:
+            - task_key: silver_incremental
+          notebook_task:
+            notebook_path: /Workspace/Users/hoa.vn@icloud.com/08_job_gold_refresh
+            source: WORKSPACE
+      queue:
+        enabled: true
+      parameters:
+        - name: input_file
+          default: abfss://order-data@storderlakehbrs160926.dfs.core.windows.net/raw/orders/orders_2026-08-03.csv
+      performance_target: STANDARD
