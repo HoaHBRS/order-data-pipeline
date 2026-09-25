@@ -382,6 +382,33 @@
 					"referenceName": "ls_azure_sql_database_dev",
 					"type": "LinkedServiceReference"
 				}
+			},
+			{
+				"name": "run_databricks_lakehouse_job",
+				"type": "DatabricksJob",
+				"dependsOn": [
+					{
+						"activity": "log_pipeline_success",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"jobId": "929068172734771"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_databricks_job_dev",
+					"type": "LinkedServiceReference"
+				}
 			}
 		],
 		"parameters": {
