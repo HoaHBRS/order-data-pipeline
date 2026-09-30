@@ -268,6 +268,17 @@ streaming version of the pipeline.
 - GitHub pull-request checks passing
 - ADF changes merged and published successfully
 
+## Cloud Teardown
+
+After the Azure MVP was successfully validated, all project-specific DEV,
+TEST, and lakehouse resources were backed up and removed to prevent idle
+costs. Terraform state and Azure Data Factory definitions were exported before
+cleanup. GitHub Actions Azure secrets and OIDC app registrations were also
+removed.
+
+The repository remains reproducible through its versioned Terraform
+configuration, ADF artifacts, Databricks notebooks, and local pipeline code.
+
 ## Possible Next Improvements
 
 - Pass the triggering file path dynamically from ADF to the Databricks job
